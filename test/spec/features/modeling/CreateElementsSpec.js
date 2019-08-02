@@ -5,11 +5,11 @@ import {
 
 import modelingModule from 'lib/features/modeling';
 
-import Elements from 'lib/features/create/Elements';
-
 import { getBBox } from 'lib/util/Elements';
 
 import { getMid } from '../../../../lib/layout/LayoutUtil';
+
+import { forEach } from 'min-dash';
 
 
 describe('features/modeling - create elements', function() {
@@ -20,6 +20,7 @@ describe('features/modeling - create elements', function() {
 
   var rootShape,
       parentShape,
+      newShape,
       newElements;
 
   beforeEach(inject(function(elementFactory, canvas) {
@@ -39,9 +40,9 @@ describe('features/modeling - create elements', function() {
 
     canvas.addShape(parentShape, rootShape);
 
-    newElements = new Elements();
+    newElements = [];
 
-    var newShape = elementFactory.createShape({
+    newShape = elementFactory.createShape({
       id: 'newShape',
       x: 0,
       y: 0,
@@ -49,7 +50,7 @@ describe('features/modeling - create elements', function() {
       height: 100
     });
 
-    newElements.add(newShape);
+    newElements.push(newShape);
 
     var newShape2 = elementFactory.createShape({
       id: 'newShape2',
@@ -59,7 +60,7 @@ describe('features/modeling - create elements', function() {
       height: 200
     });
 
-    newElements.add(newShape2);
+    newElements.push(newShape2);
 
     var newShape3 = elementFactory.createShape({
       id: 'newShape3',
@@ -70,9 +71,9 @@ describe('features/modeling - create elements', function() {
       height: 100
     });
 
-    newElements.add(newShape3);
+    newElements.push(newShape3);
 
-    newElements.add(elementFactory.createConnection({
+    newElements.push(elementFactory.createConnection({
       id: 'connection',
       source: newShape,
       target: newShape2,
@@ -99,14 +100,14 @@ describe('features/modeling - create elements', function() {
         modeling.createElements(newElements, position, parentShape);
 
         // then
-        newElements.forEach(function(newElement) {
+        forEach(newElements, function(newElement) {
           expect(elementRegistry.get(newElement.id)).to.exist;
         });
 
         expect(parentShape.children).to.have.length(3);
 
         // expect elements centered around position
-        expect(getMid(getBBox(newElements.getAll()))).to.eql(position);
+        expect(getMid(getBBox(newElements))).to.eql(position);
       }));
 
 
@@ -119,7 +120,7 @@ describe('features/modeling - create elements', function() {
         commandStack.undo();
 
         // then
-        newElements.forEach(function(newElement) {
+        forEach(newElements, function(newElement) {
           expect(elementRegistry.get(newElement.id)).not.to.exist;
         });
 
@@ -159,15 +160,52 @@ describe('features/modeling - create elements', function() {
     }));
 
 
-    it('should return a graphics element', inject(function(modeling, elementRegistry) {
+    it('should return a graphics element', inject(function(elementRegistry, modeling) {
 
       // when
       modeling.createElements(newElements, position, parentShape);
 
       // then
-      newElements.forEach(function(newElement) {
+      forEach(newElements, function(newElement) {
         expect(elementRegistry.getGraphics(newElement.id)).to.exist;
       });
+    }));
+
+
+    it('should return created elements', inject(function(modeling) {
+
+      // when
+      var elements = modeling.createElements(newElements, position, parentShape);
+
+      // then
+      expect(elements).to.exist;
+      expect(elements).to.have.length(4);
+    }));
+
+
+    it('should return actual created elements', inject(function(elementFactory, eventBus, modeling) {
+
+      // given
+      var shape = elementFactory.createShape({
+        id: 'shape',
+        x: 100,
+        y: 100,
+        width: 100,
+        height: 100
+      });
+
+      eventBus.on('commandStack.shape.create.preExecute', function(event) {
+        var context = event.context;
+
+        context.shape = shape;
+      });
+
+      // when
+      var elements = modeling.createElements(newShape, position, parentShape);
+
+      // then
+      expect(elements).to.have.length(1);
+      expect(elements[0]).to.equal(shape);
     }));
 
   });

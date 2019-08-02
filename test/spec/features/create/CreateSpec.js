@@ -17,8 +17,6 @@ import attachSupportModule from 'lib/features/attach-support';
 import connectionPreviewModule from 'lib/features/connection-preview';
 import rulesModule from './rules';
 
-import Elements from 'lib/features/create/Elements';
-
 import {
   classes as svgClasses
 } from 'tiny-svg';
@@ -33,6 +31,8 @@ var testModules = [
   moveModule,
   dragModule
 ];
+
+var LOW_PRIORITY = 500;
 
 
 describe('features/create - Create', function() {
@@ -101,7 +101,7 @@ describe('features/create - Create', function() {
       height: 50
     });
 
-    newElements = new Elements();
+    newElements = [];
 
     newShape2 = elementFactory.createShape({
       id: 'newShape2',
@@ -109,7 +109,7 @@ describe('features/create - Create', function() {
       height: 50
     });
 
-    newElements.add(newShape2);
+    newElements.push(newShape2);
 
     var newShape3 = elementFactory.createShape({
       id: 'newShape3',
@@ -119,9 +119,9 @@ describe('features/create - Create', function() {
       height: 100
     });
 
-    newElements.add(newShape3);
+    newElements.push(newShape3);
 
-    newElements.add(elementFactory.createShape({
+    newElements.push(elementFactory.createShape({
       id: 'newShape3',
       parent: newShape2,
       x: 100,
@@ -130,7 +130,7 @@ describe('features/create - Create', function() {
       height: 100
     }));
 
-    newElements.add(elementFactory.createConnection({
+    newElements.push(elementFactory.createConnection({
       id: 'newConnection',
       source: newShape2,
       target: newShape3,
@@ -175,6 +175,47 @@ describe('features/create - Create', function() {
 
       expect(createdShape.parent).to.equal(parentShape);
     }));
+
+
+    it('should update elements and shape after create', inject(
+      function(create, dragging, elementFactory, elementRegistry, eventBus) {
+
+        // given
+        var parentGfx = elementRegistry.getGraphics('parentShape');
+
+        var shape = elementFactory.createShape({
+          id: 'shape',
+          x: 100,
+          y: 100,
+          width: 100,
+          height: 100
+        });
+
+        eventBus.on('commandStack.shape.create.preExecute', function(event) {
+          var context = event.context;
+
+          context.shape = shape;
+        });
+
+        eventBus.on('create.end', LOW_PRIORITY, function(context) {
+
+          // then
+          expect(context.elements).to.have.length(1);
+          expect(context.elements[0]).to.equal(shape);
+
+          expect(context.shape).to.equal(shape);
+        });
+
+        // when
+        create.start(canvasEvent({ x: 0, y: 0 }), newShape);
+
+        dragging.hover({ element: parentShape, gfx: parentGfx });
+
+        dragging.move(canvasEvent(getMid(parentShape)));
+
+        dragging.end();
+      }
+    ));
 
 
     it('should append', inject(function(create, dragging, elementRegistry) {

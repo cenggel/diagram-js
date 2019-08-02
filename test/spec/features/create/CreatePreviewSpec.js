@@ -14,8 +14,6 @@ import createModule from 'lib/features/create';
 import attachSupportModule from 'lib/features/attach-support';
 import rulesModule from './rules';
 
-import Elements from 'lib/features/create/Elements';
-
 import { queryAll as domQueryAll } from 'min-dom';
 
 var testModules = [
@@ -44,7 +42,7 @@ describe('features/create - CreatePreviewSpec', function() {
 
     canvas.setRootElement(rootShape);
 
-    newElements = new Elements();
+    newElements = [];
 
     var newShape = elementFactory.createShape({
       id: 'newShape',
@@ -54,7 +52,7 @@ describe('features/create - CreatePreviewSpec', function() {
       height: 50
     });
 
-    newElements.add(newShape);
+    newElements.push(newShape);
 
     var newShape2 = elementFactory.createShape({
       id: 'newShape2',
@@ -64,9 +62,9 @@ describe('features/create - CreatePreviewSpec', function() {
       height: 100
     });
 
-    newElements.add(newShape2);
+    newElements.push(newShape2);
 
-    newElements.add(elementFactory.createShape({
+    newElements.push(elementFactory.createShape({
       id: 'newShape3',
       parent: newShape2,
       x: 125,
@@ -75,7 +73,7 @@ describe('features/create - CreatePreviewSpec', function() {
       height: 50
     }));
 
-    newElements.add(elementFactory.createConnection({
+    newElements.push(elementFactory.createConnection({
       id: 'newConnection',
       source: newShape,
       target: newShape2,
