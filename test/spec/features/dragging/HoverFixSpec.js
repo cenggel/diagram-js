@@ -68,22 +68,22 @@ describe('features/dragging - HoverFix', function() {
     }));
 
 
-    it('should ensure out', inject(function(dragging, eventBus) {
+    it('should ensure out', inject(function(dragging, canvas, eventBus) {
 
       // given
       var listener = sinon.spy(function(event) {
-        var element = event.element;
-
-        expect(element).to.exist;
-        expect(element).to.eql(shape1);
+        expect(event.hover).to.eql(shape1);
+        expect(event.hoverGfx).to.eql(canvas.getGraphics(shape1));
       });
 
-      eventBus.on('element.out', listener);
+      eventBus.on('drag.out', listener);
 
       // when
       dragging.init(canvasEvent({ x: 10, y: 10 }), 'foo');
-      dragging.hover({ element: shape1 });
-      dragging.hover({ element: shape2 });
+      dragging.hover({ element: shape1, gfx: canvas.getGraphics(shape1) });
+
+      // (no out)
+      eventBus.fire('element.hover', { element: shape2, gfx: canvas.getGraphics(shape2) });
 
       // then
       expect(listener).to.have.been.calledOnce;
