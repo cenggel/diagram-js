@@ -1,3 +1,5 @@
+/* global sinon */
+
 import {
   bootstrapDiagram,
   inject
@@ -12,8 +14,31 @@ describe('features/dragging - HoverFix', function() {
 
   beforeEach(bootstrapDiagram({ modules: [ dragModule ] }));
 
-  beforeEach(inject(function(canvas) {
-    canvas.addShape({ id: 'shape', x: 10, y: 10, width: 50, height: 50 });
+  var shape1,
+      shape2;
+
+  beforeEach(inject(function(canvas, elementFactory) {
+
+    shape1 = elementFactory.createShape({
+      id: 'shape1',
+      x: 10,
+      y: 10,
+      width: 50,
+      height: 50
+    });
+
+    canvas.addShape(shape1);
+
+    shape2 = elementFactory.createShape({
+      id: 'shape2',
+      x: 100,
+      y: 10,
+      width: 50,
+      height: 50
+    });
+
+    canvas.addShape(shape2);
+
   }));
 
 
@@ -40,6 +65,29 @@ describe('features/dragging - HoverFix', function() {
 
       // then
       expect(fixed).to.be.true;
+    }));
+
+
+    it('should ensure out', inject(function(dragging, eventBus) {
+
+      // given
+      var listener = sinon.spy(function(event) {
+        var element = event.element;
+
+        expect(element).to.exist;
+        expect(element).to.eql(shape1);
+      });
+
+      eventBus.on('element.out', listener);
+
+      // when
+      dragging.init(canvasEvent({ x: 10, y: 10 }), 'foo');
+      dragging.hover({ element: shape1 });
+      dragging.hover({ element: shape2 });
+
+      // then
+      expect(listener).to.have.been.calledOnce;
+
     }));
 
   });
